@@ -22,22 +22,21 @@ struct ScoreView: View {
 
                     // 🟢 LIVE MATCH UI
                     if !score.isMatchOver {
-
-                        // 📊 Equation
-                        Text(score.equation)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-
-                        // 📉 Run Rates
-                        Text("CRR: \(score.currentRR) • RRR: \(score.requiredRR)")
+                        
+                        if score.liveInning == 2 {
+                            Text("CRR: \(score.currentRR) • RRR: \(score.requiredRR)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        } else if score.liveInning == 1 {
+                            Text("CRR: \(score.currentRR)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Text("\(score.winProbability) - \(score.winProbabilityT2)")
                             .font(.caption)
                             .foregroundColor(.secondary)
-
-                        // 📈 Win Probability
-                        Text(score.winProbability)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-
+                        
                         Divider()
 
                         // 🔥 Last Over Balls
@@ -48,7 +47,6 @@ struct ScoreView: View {
                         }
                     }
 
-                    // 🔴 MATCH FINISHED UI
                     if score.isMatchOver {
                         Divider()
 

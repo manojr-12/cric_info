@@ -4,8 +4,45 @@ import Foundation
 // MARK: - Root
 
 struct MatchResponse: Codable {
-    let match: Match// move here
-    let bestPerformance: BestPerformance?   // same issue
+    let match: Match
+    let livePerformance: LivePerformance?
+    let bestPerformance: BestPerformance?
+    let recentBallCommentary: RecentBallCommentary?
+    let supportInfo: SupportInfo?
+    
+}
+
+struct SupportInfo: Codable {
+    let liveInfo: LiveInfo?
+    let liveSummary: LiveSummary?
+    
+}
+
+
+struct LiveSummary: Codable {
+    let recentBalls: [Ball]
+}
+
+struct Ball: Codable {
+    let overNumber: Int
+    let ballNumber: Int
+    let totalRuns: Int
+    let isWicket: Bool
+    let wides: Int
+    let noballs: Int
+    let batsmanPlayerId: Int
+    let bowlerPlayerId: Int
+}
+
+struct LiveInfo: Codable {
+    let type: String?
+    let currentRunRate: Double?
+    let requiredRunrate: Double?
+    let lastFewOversRunrate: Double?
+    let lastFewOversRuns: String?
+    let lastFewOversWickets: String?
+    let lastFewOversSixes: String?
+    let lastFewOversFours: String?
 }
 
 // MARK: - Match
@@ -14,11 +51,10 @@ struct Match: Codable {
     let status: String?
     let statusText: String
     let teams: [TeamWrapper]
-
+    let liveInning: Int
     let liveInningPredictions: LiveInningPredictions?
 
-    let statusData: StatusData?          // ✅ FIX: optional
-    let liveInfo: LiveInfo?
+    let statusData: StatusData?
 }
 
 
@@ -36,6 +72,8 @@ struct StatusTextData: Codable {
 
     let requiredRuns: Int?
     let remainingBalls: Int?
+    
+    let currentBattingTeamId: Int32?
 }
 
 
@@ -55,7 +93,7 @@ struct LiveBatsman: Codable {
 
 struct LiveBowler: Codable {
     let player: Player
-    let overs: Int
+    let overs: Double
     let balls: Int
     let conceded: Int
     let wickets: Int
@@ -80,7 +118,7 @@ struct BestBatsman: Codable {
 
 struct BestBowler: Codable {
     let player: Player
-    let overs: Int?
+    let overs: Double?
     let balls: Int?
     let conceded: Int?
     let wickets: Int?
@@ -99,6 +137,7 @@ struct TeamWrapper: Codable {
 }
 
 struct TeamInfo: Codable {
+    let id: Int32          // ← add this
     let longName: String
     let abbreviation: String
 }
@@ -106,12 +145,6 @@ struct TeamInfo: Codable {
 struct LiveInningPredictions: Codable {
     let winProbability: Double
 }
-
-struct LiveInfo: Codable {
-    let currentRunRate: Double
-    let requiredRunrate: Double
-}
-
 
 
 struct MatchScore {
@@ -124,15 +157,21 @@ struct MatchScore {
     let status: String
     let equation: String
     let isMatchOver: Bool
+    let liveInning: Int
 
     let currentRR: String
     let requiredRR: String
 
     let winProbability: String
+    let winProbabilityT2: String
     let lastOver: [String]
 
     let batters: [Batter]
     let bowlers: [Bowler]
+    
+    let bowlerPlayerId: Int
+    let batsmanPlayerId: Int
+    let battingTeamId: Int
 }
 
 struct Batter {
@@ -153,6 +192,49 @@ struct Bowler {
 }
 
 
+struct RecentBallCommentary: Codable {
+    let ballComments: [BallComment]
+}
+
+struct BallComment: Codable {
+    let overNumber: Int
+    let ballNumber: Int
+
+    let totalRuns: Int
+    let isWicket: Bool
+
+    let wides: Int
+    let noballs: Int
+}
+
+
+func getLastNBalls(from comments: [BallComment], count: Int = 9) -> [String] {
+
+    let sorted = comments.sorted {
+        if $0.overNumber == $1.overNumber {
+            return $0.ballNumber > $1.ballNumber
+        }
+        return $0.overNumber > $1.overNumber
+    }
+
+    let lastBalls = sorted.prefix(count).reversed()
+
+    return lastBalls.map { ball in
+        if ball.isWicket {
+            return "W"
+        } else if ball.wides > 0 {
+            return "\(ball.wides)wd"
+        } else if ball.noballs > 0 {
+            return "\(ball.noballs)nb"
+        } else if ball.totalRuns == 0 {
+            return "."
+        } else {
+            return "\(ball.totalRuns)"
+        }
+    }
+}
+
+
 
 extension MatchResponse {
 
@@ -165,6 +247,10 @@ extension MatchResponse {
 
         // MARK: - Batters
         let batters: [Batter]
+        
+        let lastBalls = getLastNBalls(
+            from: recentBallCommentary?.ballComments ?? []
+        )
 
         if isMatchOver, let perf = self.bestPerformance {  // self instead of match
             batters = perf.batsmen.prefix(2).map {
@@ -177,7 +263,18 @@ extension MatchResponse {
                     strikeRate: $0.strikerate ?? 0
                 )
             }
-        }  else {
+        } else if let livePerf = self.livePerformance, !livePerf.batsmen.isEmpty {  // self instead of match
+            batters = livePerf.batsmen.prefix(2).map {
+                Batter(
+                    name: $0.player.longName,
+                    runs: $0.runs,
+                    balls: $0.balls,
+                    fours: $0.fours,
+                    sixes: $0.sixes,
+                    strikeRate: (Double($0.runs) / Double(max($0.balls, 1))) * 100
+                )
+            }
+        } else {
             batters = []
         }
 
@@ -200,29 +297,52 @@ extension MatchResponse {
                     economy: $0.economy ?? 0
                 )
             }
-        }  else {
+        } else if let livePerf = self.livePerformance {  // self instead of match
+            bowlers = livePerf.bowlers.prefix(2).map {
+                Bowler(
+                    name: $0.player.longName,
+                    overs: overs(from: $0.balls),
+                    runs: $0.conceded,
+                    wickets: $0.wickets,
+                    economy: $0.economy
+                )
+            }
+        } else {
             bowlers = []
         }
 
         // MARK: - Run Rate
         let liveData = match.statusData?.statusTextLangData
-
-        let currentRR = match.liveInfo?.currentRunRate
+        let currentRR = self.supportInfo?.liveInfo?.currentRunRate
             ?? liveData?.currentRunRate
             ?? liveData?.crr
             ?? 0
+        
+        let battingTeamId = match.statusData?.statusTextLangData?.currentBattingTeamId
+        
+        let battingTeam = match.teams.first(where: { $0.team.id == battingTeamId })
+        let bowlingTeam = match.teams.first(where: { $0.team.id != battingTeamId })
 
-        let requiredRR = match.liveInfo?.requiredRunrate
+        let winProb = match.liveInningPredictions?.winProbability ?? 0
+        
+        let battingProb = Int(winProb)
+        let bowlingProb = Int(100 - battingProb)
+
+        let winProbability = "\(battingTeam?.team.abbreviation ?? "") \(battingProb)%"
+        let winProbabilityT2 = "\(bowlingTeam?.team.abbreviation ?? "") \(bowlingProb)%"
+
+        let requiredRR = self.supportInfo?.liveInfo?.requiredRunrate
             ?? liveData?.requiredRunrate
             ?? liveData?.rrr
             ?? 0
 
-        let equation = isMatchOver
+        let equation = isMatchOver || match.liveInning == 1
             ? ""
             : "Need \(liveData?.requiredRuns ?? 0) runs in \(liveData?.remainingBalls ?? 0) balls"
-
-        let winProb = match.liveInningPredictions?.winProbability ?? 0
-
+        
+        let batsmanPlayerId = self.supportInfo?.liveSummary?.recentBalls.first?.batsmanPlayerId
+        let bowlerPlayerId = self.supportInfo?.liveSummary?.recentBalls.first?.bowlerPlayerId
+        
         return MatchScore(
             team1: t1.team.longName,
             team1Score: t1.score ?? "-",
@@ -231,12 +351,17 @@ extension MatchResponse {
             status: match.statusText,
             equation: equation,
             isMatchOver: isMatchOver,
+            liveInning: match.liveInning,
             currentRR: String(format: "%.2f", currentRR),
             requiredRR: String(format: "%.2f", requiredRR),
-            winProbability: "\(t1.team.abbreviation) \(Int(winProb))%",
-            lastOver: ["1", ".", "2", "4", "1"],
+            winProbability: winProbability,
+            winProbabilityT2: winProbabilityT2,
+            lastOver: lastBalls,
             batters: batters,
-            bowlers: bowlers
+            bowlers: bowlers,
+            bowlerPlayerId: bowlerPlayerId ?? 0,
+            batsmanPlayerId: batsmanPlayerId ?? 0,
+            battingTeamId: battingTeamId ?? 0
         )
     }
 }
