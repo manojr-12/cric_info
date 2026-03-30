@@ -137,3 +137,51 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+
+
+# Xcode
+#
+# User settings
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# Xcode workspace user data
+*.xcworkspace/xcuserdata/
+
+# Derived data (build artifacts)
+DerivedData/
+
+# Build products
+build/
+
+# Xcode project settings (often user-specific)
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Archives
+*.xcarchive

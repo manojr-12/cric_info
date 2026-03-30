@@ -11,12 +11,13 @@ export const getLive = (req, res) => {
 };
 
 export const getScore = (req, res) => {
+
   const { matchId } = req.query;
   if (!matchId) return res.status(400).json({ error: 'matchId required' });
 
   const messageId = matchIdToMessageId[matchId];
   if (!messageId) return res.status(404).json({ error: 'No messageId yet' });
-
+  console.log("request for match ",matchId);
   const data = liveScores[messageId];
   if (!data) return res.status(404).json({ error: 'No score yet' });
 

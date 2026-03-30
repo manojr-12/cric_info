@@ -7,7 +7,7 @@ let page;
 
 export async function initBrowser() {
     browser = await chromium.launch({
-        headless: true,
+        headless: false,
         channel: 'chrome'
     });
 
@@ -28,6 +28,7 @@ export async function initBrowser() {
             const url = response.url();
 
             if (url.includes('/fastscore/message/base')) {
+                console.log("fast api");
                 const fullMessageId = new URL(url).searchParams.get('messageId');
                 const normalized = normalizeMessageId(fullMessageId);
                 const matchId = normalized.split('-')[1];
@@ -37,9 +38,7 @@ export async function initBrowser() {
                     matchIdToMessageId[matchId] = normalized;
                 }
                 console.log('Match detail updated - fast :', matchId);
-            }
-
-            if (url.includes('/v1/pages/match/details')) {
+            }else  if (url.includes('/v1/pages/match/details')) {
                 const data = await response.json();
                 const matchId = data?.match?.objectId;
 
