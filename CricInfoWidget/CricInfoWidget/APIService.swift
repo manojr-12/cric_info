@@ -3,7 +3,7 @@ import Foundation
 class APIService {
     
     static func fetchMatch() async -> MatchScore? {
-        guard let url = URL(string: "http://127.0.0.1:3000/matches/score?matchId=1527676") else {
+        guard let url = URL(string: "http://127.0.0.1:3000/matches/score?matchId=1527677") else {
             return nil
         }
         do {

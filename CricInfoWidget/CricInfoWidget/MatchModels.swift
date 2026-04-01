@@ -53,7 +53,7 @@ struct Match: Codable {
     let teams: [TeamWrapper]
     let liveInning: Int
     let liveInningPredictions: LiveInningPredictions?
-
+    let liveOvers: Double
     let statusData: StatusData?
 }
 
@@ -73,7 +73,7 @@ struct StatusTextData: Codable {
     let requiredRuns: Int?
     let remainingBalls: Int?
     
-    let currentBattingTeamId: Int32?
+    let currentBattingTeamId: Int?
 }
 
 
@@ -128,6 +128,7 @@ struct BestBowler: Codable {
 
 
 struct Player: Codable {
+    let id: Int32
     let longName: String
 }
 
@@ -171,10 +172,15 @@ struct MatchScore {
     
     let bowlerPlayerId: Int
     let batsmanPlayerId: Int
-    let battingTeamId: Int
+    let currentBattingTeamId: Int32
+    let liveOvers: Double
+    
+    let team1Id: Int32
+    let team2Id: Int32
 }
 
 struct Batter {
+    let id: Int32
     let name: String
     let runs: Int
     let balls: Int
@@ -184,6 +190,7 @@ struct Batter {
 }
 
 struct Bowler {
+    let id: Int32
     let name: String
     let overs: Double
     let runs: Int
@@ -252,9 +259,10 @@ extension MatchResponse {
             from: recentBallCommentary?.ballComments ?? []
         )
 
-        if isMatchOver, let perf = self.bestPerformance {  // self instead of match
+        if isMatchOver, let perf = self.bestPerformance {
             batters = perf.batsmen.prefix(2).map {
                 Batter(
+                    id: $0.player.id,
                     name: $0.player.longName,
                     runs: $0.runs,
                     balls: $0.balls,
@@ -263,15 +271,16 @@ extension MatchResponse {
                     strikeRate: $0.strikerate ?? 0
                 )
             }
-        } else if let livePerf = self.livePerformance, !livePerf.batsmen.isEmpty {  // self instead of match
+        } else if let livePerf = self.livePerformance, !livePerf.batsmen.isEmpty {
             batters = livePerf.batsmen.prefix(2).map {
                 Batter(
+                    id: $0.player.id,
                     name: $0.player.longName,
                     runs: $0.runs,
                     balls: $0.balls,
                     fours: $0.fours,
                     sixes: $0.sixes,
-                    strikeRate: (Double($0.runs) / Double(max($0.balls, 1))) * 100
+                    strikeRate: $0.strikerate   // ✅ use API value
                 )
             }
         } else {
@@ -287,9 +296,10 @@ extension MatchResponse {
 
         let bowlers: [Bowler]
 
-        if isMatchOver, let perf = self.bestPerformance {  // self instead of match
+        if isMatchOver, let perf = self.bestPerformance {
             bowlers = perf.bowlers.prefix(2).map {
                 Bowler(
+                    id: $0.player.id,
                     name: $0.player.longName,
                     overs: overs(from: $0.balls ?? 0),
                     runs: $0.conceded ?? 0,
@@ -297,9 +307,10 @@ extension MatchResponse {
                     economy: $0.economy ?? 0
                 )
             }
-        } else if let livePerf = self.livePerformance {  // self instead of match
+        } else if let livePerf = self.livePerformance {
             bowlers = livePerf.bowlers.prefix(2).map {
                 Bowler(
+                    id: $0.player.id,
                     name: $0.player.longName,
                     overs: overs(from: $0.balls),
                     runs: $0.conceded,
@@ -307,7 +318,7 @@ extension MatchResponse {
                     economy: $0.economy
                 )
             }
-        } else {
+        }else {
             bowlers = []
         }
 
@@ -318,7 +329,9 @@ extension MatchResponse {
             ?? liveData?.crr
             ?? 0
         
-        let battingTeamId = match.statusData?.statusTextLangData?.currentBattingTeamId
+        let battingTeamId: Int32? =
+            liveData?.currentBattingTeamId.map { Int32($0) }
+            ?? match.teams.first?.team.id
         
         let battingTeam = match.teams.first(where: { $0.team.id == battingTeamId })
         let bowlingTeam = match.teams.first(where: { $0.team.id != battingTeamId })
@@ -361,7 +374,11 @@ extension MatchResponse {
             bowlers: bowlers,
             bowlerPlayerId: bowlerPlayerId ?? 0,
             batsmanPlayerId: batsmanPlayerId ?? 0,
-            battingTeamId: battingTeamId ?? 0
+            currentBattingTeamId: battingTeamId ?? 0,
+            liveOvers: match.liveOvers,
+            team1Id: t1.team.id,
+            team2Id: t2.team.id
+            
         )
     }
 }
