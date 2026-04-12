@@ -24,13 +24,12 @@ Built a real-time cricket tracker that combines a Playwright + Node.js + Redis i
 - Batter reaches 100.
 - Batter strike rate crosses above 200.
 - Super over starts.
-- 20+ runs scored in a completed over.
+- 20+ runs scored in a over.
 - Match over result.
 
 ## Project Structure
 
 ```text
-.
 ├── cricinfo-api/
 └── cricinfo-widget/
 ```
