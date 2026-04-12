@@ -25,7 +25,7 @@
 - 20+ runs scored in a completed over.
 - Match over result.
 
-## Recommended Layout
+## Project Structure
 
 ```text
 .
