@@ -37,7 +37,13 @@ Built a real-time cricket tracker that combines a Playwright + Node.js + Redis i
 
 ## Quick Start
 
-### 1) Start API
+### 1) Start Redis
+
+```bash
+brew services start redis
+```
+
+### 2) Start API
 
 ```bash
 cd cricinfo-api
@@ -45,7 +51,7 @@ npm install
 npm start
 ```
 
-### 2) Run Widget
+### 3) Run Widget
 
 Open the Xcode project:
 
