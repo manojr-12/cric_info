@@ -10,6 +10,7 @@ Built a real-time cricket tracker that combines a Playwright + Node.js + Redis i
 ## Preview
 
 ![Cricinfo Widget Preview](cricinfo-widget/docs/images/widget-preview.png)
+![Cricinfo Widget Preview 2](cricinfo-widget/docs/images/widget-preview-2.png)
 
 ## Main Features
 

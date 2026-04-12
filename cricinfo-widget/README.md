@@ -5,6 +5,7 @@ SwiftUI menu bar app for live cricket scores and notifications.
 ## Preview
 
 ![Cricinfo Widget Preview](docs/images/widget-preview.png)
+![Cricinfo Widget Preview 2](docs/images/widget-preview-2.png)
 
 ## Project Path
 
