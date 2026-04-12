@@ -22,7 +22,7 @@
 - Batter reaches 100.
 - Batter strike rate crosses above 200.
 - Super over starts.
-- 10+ runs scored in a completed over (test helper).
+- 20+ runs scored in a completed over.
 - Match over result.
 
 ## Recommended Layout
