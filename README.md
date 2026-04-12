@@ -1,5 +1,7 @@
 # Cricinfo
 
+Built a real-time cricket tracker that combines a Playwright + Node.js + Redis ingestion API with a SwiftUI macOS menu bar app, delivering live scores and milestone notifications right on desktop.
+
 ![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?logo=nodedotjs&logoColor=white) ![Express](https://img.shields.io/badge/Express-4.x-000000?logo=express&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white) ![Playwright](https://img.shields.io/badge/Playwright-2EAD33?logo=playwright&logoColor=white) ![SwiftUI](https://img.shields.io/badge/SwiftUI-0D96F6?logo=swift&logoColor=white) ![Xcode](https://img.shields.io/badge/Xcode-147EFB?logo=xcode&logoColor=white)
 
 - `cricinfo-api/`: Node.js + Express + Playwright backend for live match ingestion and APIs.
